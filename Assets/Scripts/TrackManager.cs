@@ -25,7 +25,7 @@ public class TrackManager : MonoBehaviour
     public Vector3 RS2E { get => RElbow - RShoulder; }
     public Vector3 RE2W { get => RWrist - RElbow; }
     public Vector3 LowerNormal { get => Vector3.ProjectOnPlane(-LS2E, LE2W).normalized; }
-    public Vector3 UpperNormal { get=> Vector3.ProjectOnPlane(LE2W, LS2E).normalized; }
+    public Vector3 UpperNormal { get => Vector3.ProjectOnPlane(LE2W, LS2E).normalized; }
     //#region body angles
     ///// <summary>
     ///// the angle between upper arm and torso, its subscale on sagittal body plane, similar for the others

@@ -7,12 +7,31 @@ using System;
 
 public class UIManager : MonoBehaviour
 {
+    /// <summary>
+    /// switch on/off debug panel
+    /// </summary>
     public Toggle tg_debug;
+
     public GameObject panel;
+    /// <summary>
+    /// uninteractive, this is the indicator of tracking status
+    /// </summary>
     public Toggle tg_tracked;
+    /// <summary>
+    /// activate the activation level NNModel
+    /// </summary>
     public Toggle tg_acti;
+    /// <summary>
+    /// the toggle group for all muscles
+    /// </summary>
     public MuscleStruct<Toggle> tg_muscle;
+    /// <summary>
+    /// activate the mesh calculation
+    /// </summary>
     public Toggle tg_mesh;
+    /// <summary>
+    /// activate the mesh rendering
+    /// </summary>
     public Toggle tg_render;
     public Slider sli_weight;
     public Text txt_debug;

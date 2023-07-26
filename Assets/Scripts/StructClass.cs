@@ -234,10 +234,13 @@ namespace StructClass
         /// </summary>
         public void UpdateVisualizer()
         {
+            #region initialize the posture of muscle object everytime
             m_obj.transform.position = Vector3.zero;
             m_obj.transform.rotation = Quaternion.identity;
             m_obj.transform.localScale = Vector3.one;
             m_obj.transform.SetParent(null);
+            #endregion
+
 
             mesh.vertices = m_vertices;
             mesh.triangles = m_triangles;
@@ -258,7 +261,7 @@ namespace StructClass
 
             Vector3 targetVec = dataLowerEnd.transform.position - dataUpperEnd.transform.position;
             Quaternion q = Quaternion.FromToRotation(MeshLowerEnd.transform.position - MeshUpperEnd.transform.position,targetVec);
-            m_obj.transform.rotation*=q;
+            m_obj.transform.rotation *= q;
 
             m_obj.transform.position = dataUpperEnd.transform.position - MeshUpperEnd.transform.position;
             Vector3 thisUp = Vector3.ProjectOnPlane(m_obj.transform.up,GlobalCtrl.M_TrackManager.LS2E).normalized;

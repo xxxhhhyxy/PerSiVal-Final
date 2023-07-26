@@ -41,15 +41,15 @@ public class RawArm : MonoBehaviour
         {
 
 
-            GameObject tendonMarkL = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            tendonMarkL.transform.localScale = Vector3.one * 0.3f;
-            GameObject tendonMarkU = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            tendonMarkU.transform.localScale = Vector3.one * 0.3f;
-            tendonMarkL.transform.position = MuscleClass.ReflectX(tendonInfo.SearchMuscle(a.Key).lowerPos);
-            tendonMarkU.transform.position = MuscleClass.ReflectX(tendonInfo.SearchMuscle(a.Key).upperPos);
+            //GameObject tendonMarkL = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            //tendonMarkL.transform.localScale = Vector3.one * 0.3f;
+            //GameObject tendonMarkU = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            //tendonMarkU.transform.localScale = Vector3.one * 0.3f;
+            //tendonMarkL.transform.position = MuscleClass.ReflectX(tendonInfo.SearchMuscle(a.Key).lowerPos);
+            //tendonMarkU.transform.position = MuscleClass.ReflectX(tendonInfo.SearchMuscle(a.Key).upperPos);
 
 
-
+            //create an empty gameobject, setting as the child of the upper bone, ready to connect the new muscle's tendon.
             GameObject upperEndObj = new GameObject(a.Key + "_UpEnd");
             upperEndObj.transform.position =MuscleClass.ReflectX( tendonInfo.SearchMuscle(a.Key).upperPos);
             upperEndObj.transform.SetParent(upperBoneObj.transform);
