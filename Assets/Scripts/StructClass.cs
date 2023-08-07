@@ -93,6 +93,10 @@ namespace StructClass
         /// </summary>
         public Vector3[] m_vertices;
         /// <summary>
+        /// colors for muscles
+        /// </summary>
+        public Color[] m_colors;
+        /// <summary>
         /// the carrier of the mesh and visualization for this muscle
         /// </summary>
         public GameObject m_obj;
@@ -118,6 +122,25 @@ namespace StructClass
             return new Vector3(-input.x, input.y, input.z);
         }
 
+        private Color SelectMuscleColor(MuscleEnum inputType)
+        {
+            switch (inputType)
+            {
+                case MuscleEnum.Biceps:
+                    return Color.blue;
+                case MuscleEnum.Brachialis:
+                    return Color.red;
+                case MuscleEnum.Brachiorad:
+                    return Color.green;
+                case MuscleEnum.Anoneus:
+                    return Color.magenta;
+                case MuscleEnum.Triceps:
+                    return Color.yellow;
+                default:
+                    return Color.blue;
+            }
+        }
+
         /// <summary>
         /// the data processor of muscle
         /// </summary>
@@ -132,6 +155,8 @@ namespace StructClass
             List<Vector3> tempVertices = new List<Vector3>();
             List<int> tempTriangle = new List<int>();
             List<Vector3> tempVN = new List<Vector3>();
+            List<Color> tempColor = new List<Color>();
+            List<int> tempIndecies = new List<int>();
             //put all data from distribution text asset into the list
             for (int i = 0; i < fileLines.Length; i++)
             {
@@ -139,6 +164,7 @@ namespace StructClass
                 {
                     case "v":
                         tempVertices.Add(0.001f * new Vector3(float.Parse(fileLines[i].Split(' ')[1]), float.Parse(fileLines[i].Split(' ')[2]), float.Parse(fileLines[i].Split(' ')[3])));
+                        tempColor.Add(SelectMuscleColor(inputType));
                         break;
                     case "vn"://vertical normal, don't need to care
                         tempVN.Add(new Vector3(float.Parse(fileLines[i].Split(' ')[1]), float.Parse(fileLines[i].Split(' ')[2]), float.Parse(fileLines[i].Split(' ')[3])));
@@ -162,6 +188,7 @@ namespace StructClass
             m_vertices = tempVertices.ToArray();
             m_triangles = tempTriangle.ToArray();
             m_normals = tempVN.ToArray();
+            m_colors = tempColor.ToArray();
             numOfPoints = m_vertices.Length;
 
             Model runtimeModel = ModelLoader.Load(inputModel);
@@ -232,7 +259,7 @@ namespace StructClass
         /// <summary>
         /// refresh the rendering
         /// </summary>
-        public void UpdateVisualizer()
+        public void UpdateVisualizer(bool pointcloud)
         {
             #region initialize the posture of muscle object everytime
             m_obj.transform.position = Vector3.zero;
@@ -243,8 +270,17 @@ namespace StructClass
 
 
             mesh.vertices = m_vertices;
-            mesh.triangles = m_triangles;
-            mesh.SetNormals(m_normals);
+            mesh.colors = m_colors;
+            if(pointcloud)
+            {
+                mesh.SetIndices(Enumerable.Range(0, numOfPoints).ToArray(), MeshTopology.Points, 0);
+            }
+            else
+            {
+                mesh.triangles = m_triangles;
+                mesh.SetNormals(m_normals);
+            }
+
 
 
             //GameObject trans = GlobalCtrl.M_FaceVisualizer.rawArm.dic_muscleTrans[m_muscleType];
@@ -252,61 +288,25 @@ namespace StructClass
             GameObject dataLowerEnd = GlobalCtrl.M_FaceVisualizer.rawArm.dic_LowerEnds[m_muscleType];
             TendonInfo tendonInfo = GlobalCtrl.M_FaceVisualizer.rawArm.tendonInfo.SearchMuscle(m_muscleType);
 
-            MeshUpperEnd.transform.position =mesh.vertices[tendonInfo.upperID];
-            MeshLowerEnd.transform.position =mesh.vertices[tendonInfo.lowerID];
+            MeshUpperEnd.transform.position = mesh.vertices[tendonInfo.upperID];
+            MeshLowerEnd.transform.position = mesh.vertices[tendonInfo.lowerID];
 
 
             float ratio = Vector3.Distance(dataUpperEnd.transform.position, dataLowerEnd.transform.position) / Vector3.Distance(MeshUpperEnd.transform.position, MeshLowerEnd.transform.position);
             m_obj.transform.localScale = ratio * Vector3.one;
 
             Vector3 targetVec = dataLowerEnd.transform.position - dataUpperEnd.transform.position;
-            Quaternion q = Quaternion.FromToRotation(MeshLowerEnd.transform.position - MeshUpperEnd.transform.position,targetVec);
+            Quaternion q = Quaternion.FromToRotation(MeshLowerEnd.transform.position - MeshUpperEnd.transform.position, targetVec);
             m_obj.transform.rotation *= q;
 
             m_obj.transform.position = dataUpperEnd.transform.position - MeshUpperEnd.transform.position;
-            Vector3 thisUp = Vector3.ProjectOnPlane(m_obj.transform.up,GlobalCtrl.M_TrackManager.LS2E).normalized;
-            float tempAngle=Vector3.SignedAngle(GlobalCtrl.M_TrackManager.UpperNormal ,thisUp, GlobalCtrl.M_TrackManager.LS2E);
+            Vector3 thisUp = Vector3.ProjectOnPlane(m_obj.transform.up, GlobalCtrl.M_TrackManager.LS2E).normalized;
+            float tempAngle = Vector3.SignedAngle(GlobalCtrl.M_TrackManager.UpperNormal, thisUp, GlobalCtrl.M_TrackManager.LS2E);
             m_obj.transform.RotateAround(dataUpperEnd.transform.position, GlobalCtrl.M_TrackManager.LS2E, GlobalCtrl.M_FaceVisualizer.rawArm.dic_rot[m_muscleType] - tempAngle);
 
-            /*
-             
-            //Debug.Log(Vector3.Distance(MeshUpperEnd.transform.position, MeshLowerEnd.transform.position) +"/"+
-            //    Vector3.Distance(dataUpperEnd.transform.position, dataLowerEnd.transform.position));
-            //float ratio = Vector3.Distance(dataUpperEnd.transform.position, dataLowerEnd.transform.position)/Vector3.Distance(MeshUpperEnd.transform.position, MeshLowerEnd.transform.position) ;
-            //m_obj.transform.localScale = ratio * Vector3.one;
-            //trans.transform.position = (MeshUpperEnd.transform.position + MeshLowerEnd.transform.position) / 2;
-            //m_obj.transform.SetParent(trans.transform);
-            //trans.transform.position = (dataUpperEnd.transform.position + dataLowerEnd.transform.position) / 2;
-            //trans.transform.LookAt(MeshUpperEnd.transform.position, GlobalCtrl.M_TrackManager.LowerNormal);
-            */
-
-
-
-
-
-            //float ratio = Vector3.Distance((GlobalCtrl.M_FaceVisualizer.rawArm.tendonSlotsUpper[m_muscleType].transform.position),
-            //    (GlobalCtrl.M_FaceVisualizer.rawArm.tendonSlotsLower[m_muscleType].transform.position))
-            //    / Vector3.Distance(upperEnds, lowerEnds);
-
-            //Vector3 curVec = lowerEnds - upperEnds;
-            //Vector3 tarVec = GlobalCtrl.M_FaceVisualizer.rawArm.tendonSlotsLower[m_muscleType].transform.position - GlobalCtrl.M_FaceVisualizer.rawArm.tendonSlotsUpper[m_muscleType].transform.position;
-            //Quaternion rot = Quaternion.FromToRotation(curVec, tarVec);
-
-            //Vector3 upperOffset = upperEnds - m_obj.transform.position;
-            //m_obj.transform.localScale = Vector3.one * ratio;
-            //Debug.Log(ratio * upperOffset);
-            //Debug.Log(GlobalCtrl.M_FaceVisualizer.rawArm.tendonSlotsUpper[m_muscleType].transform.position);
-            //m_obj.transform.position = GlobalCtrl.M_FaceVisualizer.rawArm.tendonSlotsUpper[m_muscleType].transform.position + ratio * upperOffset;
-            //m_obj.transform.rotation = rot * m_obj.transform.rotation;
-            //if (!debugTab)
-            //{
-            //    GlobalCtrl.M_UIManager.f_txt_debug(upperOffset.ToString() + "\n" +
-            //        "tar " + GlobalCtrl.M_FaceVisualizer.rawArm.tendonSlotsUpper[m_muscleType].transform.position.ToString() + "\n"
-            //        + "cur " + upperEnds.ToString() + "\n"
-            //        + "obj " + m_obj.transform.position.ToString() + "\n");
-
-            //}
         }
+
+
     }
 
 }

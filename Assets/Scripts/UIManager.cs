@@ -33,6 +33,7 @@ public class UIManager : MonoBehaviour
     /// activate the mesh rendering
     /// </summary>
     public Toggle tg_render;
+    public Toggle tg_pointcloud;
     public Slider sli_weight;
     public Text txt_debug;
     /// <summary>
@@ -76,7 +77,8 @@ public class UIManager : MonoBehaviour
     }
     private void f_tg_render(bool isOn)
     {
-        GlobalCtrl.M_FaceVisualizer.f_Init();
+        tg_pointcloud.interactable = false;
+        GlobalCtrl.M_FaceVisualizer.f_Init(tg_pointcloud.isOn);
 
     }
     public void f_Sli_Weight(float input)
