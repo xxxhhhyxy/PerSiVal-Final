@@ -34,6 +34,7 @@ public class UIManager : MonoBehaviour
     /// </summary>
     public Toggle tg_render;
     public Toggle tg_pointcloud;
+    public Toggle tg_particle;
     public Slider sli_weight;
     public Text txt_debug;
     /// <summary>
@@ -78,7 +79,15 @@ public class UIManager : MonoBehaviour
     private void f_tg_render(bool isOn)
     {
         tg_pointcloud.interactable = false;
-        GlobalCtrl.M_FaceVisualizer.f_Init(tg_pointcloud.isOn);
+        tg_particle.interactable = false;
+        RenderMethod renderMethod = RenderMethod.MeshFace;
+        if (tg_pointcloud.isOn && tg_particle.isOn)
+            renderMethod = RenderMethod.ParticlePoint;
+        else if (tg_pointcloud.isOn && !tg_particle.isOn)
+            renderMethod = RenderMethod.MeshPoint;
+        else
+            renderMethod = RenderMethod.MeshFace;
+        GlobalCtrl.M_FaceVisualizer.f_Init(renderMethod);
 
     }
     public void f_Sli_Weight(float input)

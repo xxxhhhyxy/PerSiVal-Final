@@ -2,24 +2,28 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using StructClass;
+using UnityEngine.XR.ARFoundation;
 
 public class FaceVisualizer : MonoBehaviour
 {
     public RawArm rawArm;
     public Material Mat_Muscle;
-    public bool usingPointcloud = false;
     private bool isInited = false;
-    public void f_Init(bool isPointcloud)
+    public RenderMethod renderMethod = RenderMethod.MeshFace;
+    private Mesh mesh;
+
+    public void f_Init(RenderMethod renderOpt)
     {
-        usingPointcloud = isPointcloud;
-        if (usingPointcloud) {
+        renderMethod = renderOpt;
+        if (renderMethod.Equals(RenderMethod.MeshPoint)) {
             Material mat_Cloudpoints = new Material(Shader.Find("Custom/PointCloud"));
             Mat_Muscle = mat_Cloudpoints;
         }
         rawArm.f_Init();
         foreach (var a in GlobalCtrl.M_MeshManager.Dic_trackedMuscle)
         {
-            a.Value.InitCarrier();
+            a.Value.InitCarrier(renderMethod);
+
         }
         isInited = true;
     }
@@ -33,7 +37,7 @@ public class FaceVisualizer : MonoBehaviour
         rawArm.UpdateBone();
         foreach (var a in GlobalCtrl.M_MeshManager.Dic_trackedMuscle)
         {
-            a.Value.UpdateVisualizer(usingPointcloud);
+            a.Value.UpdateVisualizer(renderMethod);
         }
     }
 

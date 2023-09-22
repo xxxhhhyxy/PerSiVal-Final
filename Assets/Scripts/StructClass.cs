@@ -1,9 +1,13 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 using System;
-using Unity.Barracuda;
+using System.Collections.Generic;
+//using System.Drawing;
 using System.Linq;
+using Unity.Barracuda;
+using UnityEngine;
+using UnityEngine.UIElements;
+using UnityEngine.XR.ARFoundation;
+using UnityEngine.XR.ARSubsystems;
+using static UnityEngine.ParticleSystem;
 
 namespace StructClass
 {
@@ -57,6 +61,13 @@ namespace StructClass
         }
     }
 
+    public enum RenderMethod
+    {
+        MeshFace,
+        MeshPoint,
+        ParticlePoint,
+    }
+
     /// <summary>
     /// 
     /// </summary>
@@ -100,9 +111,21 @@ namespace StructClass
         /// the carrier of the mesh and visualization for this muscle
         /// </summary>
         public GameObject m_obj;
+
+        /// <summary>
+        /// Below belongs to render parts, we need to decouple it.
+        /// </summary>
         private MeshFilter meshFilter;
-        private Mesh mesh;
+        public Mesh mesh { get; set; }
         private MeshRenderer meshRender;
+
+        private ParticleSystem particleSystem;
+        private ParticleSystem.Particle[] m_particles;
+        private ARPointCloudManager arPointcloud;
+        private ARParticleVisualizer arParticleVisualizer;
+        /// <summary>
+        /// above need to be decoupled
+        /// </summary>
 
 
         private GameObject MeshUpperEnd;
@@ -115,14 +138,13 @@ namespace StructClass
         float[] outputCoords;
         List<Vector3> list_vertices;
 
-  
 
         public static Vector3 ReflectX(Vector3 input)
         {
             return new Vector3(-input.x, input.y, input.z);
         }
 
-        private Color SelectMuscleColor(MuscleEnum inputType)
+        private static Color SelectMuscleColor(MuscleEnum inputType)
         {
             switch (inputType)
             {
@@ -198,7 +220,7 @@ namespace StructClass
         /// <summary>
         /// initialization before rendering
         /// </summary>
-        public void InitCarrier()
+        public void InitCarrier(RenderMethod renderMethod = RenderMethod.MeshFace)
         {
             m_obj = new GameObject(m_muscleType.ToString());
             m_obj.transform.position = Vector3.zero;
@@ -206,14 +228,40 @@ namespace StructClass
             MeshUpperEnd.transform.SetParent(m_obj.transform);
             MeshLowerEnd = new GameObject("meshLowerEnd");
             MeshLowerEnd.transform.SetParent(m_obj.transform);
-            meshFilter = m_obj.AddComponent<MeshFilter>();
-            meshRender = m_obj.AddComponent<MeshRenderer>();
-            meshRender.sharedMaterial = GlobalCtrl.M_FaceVisualizer.Mat_Muscle;
-            mesh = meshFilter.mesh;
+
+            if (renderMethod.Equals(RenderMethod.ParticlePoint))
+            {
+                particleSystem = m_obj.AddComponent<ParticleSystem>();
+                //arPointcloud = m_obj.AddComponent<ARPointCloudManager>();
+                //arParticleVisualizer = m_obj.AddComponent<ARParticleVisualizer>();
+                var pmain = particleSystem.main;
+                pmain.startSpeed = 0f;
+                pmain.startLifetime = 99999f;
+                pmain.maxParticles = 100000;
+                pmain.startSize = 100f;
+                pmain.startColor = SelectMuscleColor(m_muscleType);
+                pmain.loop = false;
+                var pRenderer = particleSystem.GetComponent<ParticleSystemRenderer>();
+                pRenderer.alignment = ParticleSystemRenderSpace.Local;
+                pRenderer.renderMode = ParticleSystemRenderMode.Billboard;
+                Material mat_Cloudpoints = new Material(Shader.Find("Custom/PointCloud"));
+                pRenderer.material = mat_Cloudpoints;
+                var emission = particleSystem.emission;
+                emission.enabled = false;
+            }
+            else
+            {
+                meshRender = m_obj.AddComponent<MeshRenderer>();
+                meshFilter = m_obj.AddComponent<MeshFilter>();
+                meshRender.sharedMaterial = GlobalCtrl.M_FaceVisualizer.Mat_Muscle;
+                mesh = meshFilter.mesh;
+            }
             GlobalCtrl.M_UIManager.f_txt_debug(m_muscleType.ToString() + " mesh");
 
 
         }
+
+
         /// <summary>
         /// update the mesh data of this muscle, but for now just the data
         /// calculating the mesh is ok, how to render them is a critical problem, due to the lack of rendering power
@@ -255,11 +303,7 @@ namespace StructClass
             return output.AsFloats().ToList();
         }
 
-
-        /// <summary>
-        /// refresh the rendering
-        /// </summary>
-        public void UpdateVisualizer(bool pointcloud)
+        public void UpdateParticle()
         {
             #region initialize the posture of muscle object everytime
             m_obj.transform.position = Vector3.zero;
@@ -268,28 +312,90 @@ namespace StructClass
             m_obj.transform.SetParent(null);
             #endregion
 
+        }
 
+        public void UpdateMeshPointSetting()
+        {
+            /// Set Mesh
             mesh.vertices = m_vertices;
             mesh.colors = m_colors;
-            if(pointcloud)
+            mesh.SetIndices(Enumerable.Range(0, numOfPoints).ToArray(), MeshTopology.Points, 0);
+
+        }
+
+        public void UpdateMeshFaceSetting()
+        {
+            /// Set Mesh
+            mesh.vertices = m_vertices;
+            mesh.colors = m_colors;
+            mesh.triangles = m_triangles;
+            mesh.SetNormals(m_normals);
+
+        }
+
+        public void UpdateParticleSetting()
+        {
+            
+            if (m_particles == null || m_particles.Length < numOfPoints)
             {
-                mesh.SetIndices(Enumerable.Range(0, numOfPoints).ToArray(), MeshTopology.Points, 0);
+                m_particles = new ParticleSystem.Particle[numOfPoints];
+            }
+
+            for (int i = 0; i < numOfPoints; i++)
+            {
+                m_particles[i].position = m_vertices[i];
+                m_particles[i].startColor = SelectMuscleColor(m_muscleType);
+                m_particles[i].startSize = 10f;
+                m_particles[i].startLifetime = 50f;
+                m_particles[i].remainingLifetime = 50f;
+            }
+            Debug.Log(m_particles[12].startColor);
+            particleSystem.SetParticles(m_particles, m_particles.Length);
+
+            var particles = m_particles;
+            int particleCount = particleSystem.GetParticles(particles);
+            Debug.Log(particleCount);
+
+        }
+
+
+        /// <summary>
+        /// refresh the rendering
+        /// </summary>
+        public void UpdateVisualizer(RenderMethod renderMethod)
+        {
+            #region initialize the posture of muscle object everytime
+            m_obj.transform.position = Vector3.zero;
+            m_obj.transform.rotation = Quaternion.identity;
+            m_obj.transform.localScale = Vector3.one;
+            m_obj.transform.SetParent(null);
+            #endregion
+
+            /// Update Mesh settings
+            if (renderMethod.Equals(RenderMethod.MeshFace))
+            {
+                UpdateMeshFaceSetting();
+            }
+            else if (renderMethod.Equals(RenderMethod.MeshPoint))
+            {
+                UpdateMeshPointSetting();
+            }
+            else if (renderMethod.Equals(RenderMethod.ParticlePoint))
+            {
+                UpdateParticleSetting();
             }
             else
             {
-                mesh.triangles = m_triangles;
-                mesh.SetNormals(m_normals);
+                UpdateMeshFaceSetting();
             }
-
-
 
             //GameObject trans = GlobalCtrl.M_FaceVisualizer.rawArm.dic_muscleTrans[m_muscleType];
             GameObject dataUpperEnd = GlobalCtrl.M_FaceVisualizer.rawArm.dic_UpperEnds[m_muscleType];
             GameObject dataLowerEnd = GlobalCtrl.M_FaceVisualizer.rawArm.dic_LowerEnds[m_muscleType];
             TendonInfo tendonInfo = GlobalCtrl.M_FaceVisualizer.rawArm.tendonInfo.SearchMuscle(m_muscleType);
 
-            MeshUpperEnd.transform.position = mesh.vertices[tendonInfo.upperID];
-            MeshLowerEnd.transform.position = mesh.vertices[tendonInfo.lowerID];
+            MeshUpperEnd.transform.position = m_vertices[tendonInfo.upperID];
+            MeshLowerEnd.transform.position = m_vertices[tendonInfo.lowerID];
 
 
             float ratio = Vector3.Distance(dataUpperEnd.transform.position, dataLowerEnd.transform.position) / Vector3.Distance(MeshUpperEnd.transform.position, MeshLowerEnd.transform.position);
@@ -303,6 +409,7 @@ namespace StructClass
             Vector3 thisUp = Vector3.ProjectOnPlane(m_obj.transform.up, GlobalCtrl.M_TrackManager.LS2E).normalized;
             float tempAngle = Vector3.SignedAngle(GlobalCtrl.M_TrackManager.UpperNormal, thisUp, GlobalCtrl.M_TrackManager.LS2E);
             m_obj.transform.RotateAround(dataUpperEnd.transform.position, GlobalCtrl.M_TrackManager.LS2E, GlobalCtrl.M_FaceVisualizer.rawArm.dic_rot[m_muscleType] - tempAngle);
+
 
         }
 
