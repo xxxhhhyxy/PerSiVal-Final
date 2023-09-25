@@ -122,7 +122,7 @@ namespace StructClass
         private ParticleSystem particleSystem;
         private ParticleSystem.Particle[] m_particles;
         private ARPointCloudManager arPointcloud;
-        private ARParticleVisualizer arParticleVisualizer;
+        //private ARParticleVisualizer arParticleVisualizer;
         /// <summary>
         /// above need to be decoupled
         /// </summary>
@@ -231,6 +231,7 @@ namespace StructClass
 
             if (renderMethod.Equals(RenderMethod.ParticlePoint))
             {
+                // set particle system
                 particleSystem = m_obj.AddComponent<ParticleSystem>();
                 //arPointcloud = m_obj.AddComponent<ARPointCloudManager>();
                 //arParticleVisualizer = m_obj.AddComponent<ARParticleVisualizer>();
@@ -241,16 +242,21 @@ namespace StructClass
                 pmain.startSize = 100f;
                 pmain.startColor = SelectMuscleColor(m_muscleType);
                 pmain.loop = false;
+
+                // set particleRender
                 var pRenderer = particleSystem.GetComponent<ParticleSystemRenderer>();
                 pRenderer.alignment = ParticleSystemRenderSpace.Local;
                 pRenderer.renderMode = ParticleSystemRenderMode.Billboard;
                 Material mat_Cloudpoints = new Material(Shader.Find("Custom/PointCloud"));
                 pRenderer.material = mat_Cloudpoints;
+
+                // no need to use emission
                 var emission = particleSystem.emission;
                 emission.enabled = false;
             }
             else
             {
+                // set MeshRender and bind material
                 meshRender = m_obj.AddComponent<MeshRenderer>();
                 meshFilter = m_obj.AddComponent<MeshFilter>();
                 meshRender.sharedMaterial = GlobalCtrl.M_FaceVisualizer.Mat_Muscle;
@@ -335,12 +341,13 @@ namespace StructClass
 
         public void UpdateParticleSetting()
         {
-            
+            // Check if the array of particles need to be renewed
             if (m_particles == null || m_particles.Length < numOfPoints)
             {
                 m_particles = new ParticleSystem.Particle[numOfPoints];
             }
 
+            // Set each particle
             for (int i = 0; i < numOfPoints; i++)
             {
                 m_particles[i].position = m_vertices[i];
@@ -349,9 +356,11 @@ namespace StructClass
                 m_particles[i].startLifetime = 50f;
                 m_particles[i].remainingLifetime = 50f;
             }
-            Debug.Log(m_particles[12].startColor);
+
+            // Set particles into particle system
             particleSystem.SetParticles(m_particles, m_particles.Length);
 
+            // For debug, check the generated particles
             var particles = m_particles;
             int particleCount = particleSystem.GetParticles(particles);
             Debug.Log(particleCount);

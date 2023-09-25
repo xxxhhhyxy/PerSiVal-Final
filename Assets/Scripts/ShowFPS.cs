@@ -29,7 +29,8 @@ public class ShowFPS : MonoBehaviour
 
         count++;
         deltaTime += Time.deltaTime;
-        if(deltaTime > showTime)
+        //count fps every 1 second
+        if (deltaTime > showTime)
         {
             float fps = count / deltaTime;
             float milliSecond = deltaTime * 1000 / count;
