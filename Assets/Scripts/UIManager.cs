@@ -36,6 +36,7 @@ public class UIManager : MonoBehaviour
     public Toggle tg_pointcloud;
     public Toggle tg_particle;
     public Slider sli_weight;
+    public Toggle tg_color;
     public Text txt_debug;
     /// <summary>
     /// 
@@ -78,18 +79,26 @@ public class UIManager : MonoBehaviour
     }
     private void f_tg_render(bool isOn)
     {
-        tg_pointcloud.interactable = false;
-        tg_particle.interactable = false;
-        RenderMethod renderMethod = RenderMethod.MeshFace;
-        if (tg_pointcloud.isOn && tg_particle.isOn)
-            renderMethod = RenderMethod.ParticlePoint;
-        else if (tg_pointcloud.isOn && !tg_particle.isOn)
-            renderMethod = RenderMethod.MeshPoint;
+        tg_pointcloud.interactable = !isOn;
+        tg_particle.interactable = !isOn;
+        if (isOn)
+        {
+            RenderMethod renderMethod = RenderMethod.MeshFace;
+            if (tg_pointcloud.isOn && tg_particle.isOn)
+                renderMethod = RenderMethod.ParticlePoint;
+            else if (tg_pointcloud.isOn && !tg_particle.isOn)
+                renderMethod = RenderMethod.MeshPoint;
+            else
+                renderMethod = RenderMethod.MeshFace;
+            GlobalCtrl.M_FaceVisualizer.f_Init(renderMethod);
+        }
         else
-            renderMethod = RenderMethod.MeshFace;
-        GlobalCtrl.M_FaceVisualizer.f_Init(renderMethod);
+        {
+            GlobalCtrl.M_FaceVisualizer.ClearRender();
+        }
 
     }
+   
     public void f_Sli_Weight(float input)
     {
         if (input < 5)

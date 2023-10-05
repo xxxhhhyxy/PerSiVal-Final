@@ -1,0 +1,17 @@
+418.8 fps, rendering interval: 2.4ms
+1010.1 fps, rendering interval: 1.0ms
+1013.5 fps, rendering interval: 1.0ms
+1017.0 fps, rendering interval: 1.0ms
+1007.8 fps, rendering interval: 1.0ms
+1012.6 fps, rendering interval: 1.0ms
+1025.0 fps, rendering interval: 1.0ms
+1013.9 fps, rendering interval: 1.0ms
+1035.4 fps, rendering interval: 1.0ms
+1029.7 fps, rendering interval: 1.0ms
+1029.8 fps, rendering interval: 1.0ms
+1034.2 fps, rendering interval: 1.0ms
+1039.7 fps, rendering interval: 1.0ms
+867.2 fps, rendering interval: 1.2ms
+913.6 fps, rendering interval: 1.1ms
+920.8 fps, rendering interval: 1.1ms
+908.5 fps, rendering interval: 1.1ms

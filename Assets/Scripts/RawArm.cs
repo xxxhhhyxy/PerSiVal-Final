@@ -82,6 +82,10 @@ public class RawArm : MonoBehaviour
         isInited = true;
     }
 
+    public void HideRawArm()
+    {
+
+    }
     public void UpdateBone()
     {
         if (!isInited)

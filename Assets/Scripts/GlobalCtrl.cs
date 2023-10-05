@@ -94,7 +94,8 @@ public class GlobalCtrl : MonoBehaviour
         M_MeshManager.UpdateMesh();
         //input: the new distribution of vertices
         //output: new rendered visualization
-        M_FaceVisualizer.UpdateVisualizer();
+        if (M_UIManager.tg_render.isOn)
+            M_FaceVisualizer.UpdateVisualizer();
     }
 
 }

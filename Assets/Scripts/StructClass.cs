@@ -20,8 +20,8 @@ namespace StructClass
         Biceps = 0,
         Brachialis = 1,
         Brachiorad = 2,
-        Anoneus = 3,
-        Triceps = 4
+        Triceps = 3,
+        Anoneus = 4
     }
     /// <summary>
     /// the generic structure
@@ -247,7 +247,7 @@ namespace StructClass
                 var pRenderer = particleSystem.GetComponent<ParticleSystemRenderer>();
                 pRenderer.alignment = ParticleSystemRenderSpace.Local;
                 pRenderer.renderMode = ParticleSystemRenderMode.Billboard;
-                Material mat_Cloudpoints = new Material(Shader.Find("Custom/PointCloud"));
+                Material mat_Cloudpoints = new Material(GlobalCtrl.M_FaceVisualizer.shader_PointCloud);
                 pRenderer.material = mat_Cloudpoints;
 
                 // no need to use emission
@@ -259,7 +259,7 @@ namespace StructClass
                 // set MeshRender and bind material
                 meshRender = m_obj.AddComponent<MeshRenderer>();
                 meshFilter = m_obj.AddComponent<MeshFilter>();
-                meshRender.sharedMaterial = GlobalCtrl.M_FaceVisualizer.Mat_Muscle;
+                meshRender.sharedMaterial =Material.Instantiate(GlobalCtrl.M_FaceVisualizer.Mat_Muscle);
                 mesh = meshFilter.mesh;
             }
             GlobalCtrl.M_UIManager.f_txt_debug(m_muscleType.ToString() + " mesh");
@@ -267,7 +267,12 @@ namespace StructClass
 
         }
 
-
+        public void ClearRender()
+        {
+            MonoBehaviour.Destroy(m_obj);
+            MonoBehaviour.Destroy(MeshUpperEnd);
+            MonoBehaviour.Destroy(MeshLowerEnd);
+        }
         /// <summary>
         /// update the mesh data of this muscle, but for now just the data
         /// calculating the mesh is ok, how to render them is a critical problem, due to the lack of rendering power
@@ -336,6 +341,8 @@ namespace StructClass
             mesh.colors = m_colors;
             mesh.triangles = m_triangles;
             mesh.SetNormals(m_normals);
+            if(GlobalCtrl.M_UIManager.tg_color.isOn)
+            meshRender.sharedMaterial.color = Color.Lerp(Color.white, SelectMuscleColor(m_muscleType), GlobalCtrl.M_ActiManager.activations[(int)m_muscleType]);
 
         }
 
@@ -352,6 +359,10 @@ namespace StructClass
             {
                 m_particles[i].position = m_vertices[i];
                 m_particles[i].startColor = SelectMuscleColor(m_muscleType);
+                if (GlobalCtrl.M_UIManager.tg_color.isOn)
+                    m_particles[i].startColor = Color.Lerp(Color.white, SelectMuscleColor(m_muscleType), GlobalCtrl.M_ActiManager.activations[(int)m_muscleType]);
+                else
+                    m_particles[i].startColor = SelectMuscleColor(m_muscleType);
                 m_particles[i].startSize = 10f;
                 m_particles[i].startLifetime = 50f;
                 m_particles[i].remainingLifetime = 50f;
@@ -373,6 +384,7 @@ namespace StructClass
         /// </summary>
         public void UpdateVisualizer(RenderMethod renderMethod)
         {
+            /* the original general plan using two ends to connect muscles
             #region initialize the posture of muscle object everytime
             m_obj.transform.position = Vector3.zero;
             m_obj.transform.rotation = Quaternion.identity;
@@ -418,8 +430,33 @@ namespace StructClass
             Vector3 thisUp = Vector3.ProjectOnPlane(m_obj.transform.up, GlobalCtrl.M_TrackManager.LS2E).normalized;
             float tempAngle = Vector3.SignedAngle(GlobalCtrl.M_TrackManager.UpperNormal, thisUp, GlobalCtrl.M_TrackManager.LS2E);
             m_obj.transform.RotateAround(dataUpperEnd.transform.position, GlobalCtrl.M_TrackManager.LS2E, GlobalCtrl.M_FaceVisualizer.rawArm.dic_rot[m_muscleType] - tempAngle);
+            */
 
 
+            #region initialize the posture of muscle object everytime
+            m_obj.transform.SetParent(GlobalCtrl.M_FaceVisualizer.rawArm.upperBoneObj.transform);
+            m_obj.transform.localPosition = Vector3.zero;
+            m_obj.transform.localRotation = Quaternion.identity;
+            m_obj.transform.localScale = Vector3.one;
+
+            /// Update Mesh settings
+            if (renderMethod.Equals(RenderMethod.MeshFace))
+            {
+                UpdateMeshFaceSetting();
+            }
+            else if (renderMethod.Equals(RenderMethod.MeshPoint))
+            {
+                UpdateMeshPointSetting();
+            }
+            else if (renderMethod.Equals(RenderMethod.ParticlePoint))
+            {
+                UpdateParticleSetting();
+            }
+            else
+            {
+                UpdateMeshFaceSetting();
+            }
+            #endregion
         }
 
 
