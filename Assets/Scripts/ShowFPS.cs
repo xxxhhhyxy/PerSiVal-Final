@@ -11,41 +11,40 @@ public class ShowFPS : MonoBehaviour
     private float deltaTime = 0f;
 
     public string fileName = "fps-record";
-    private TextWriter tw;
+    float _updateInterval = 1f;
+    float _accum = 0;
+    int _frame = 0;
+    float timeleft;
+
     // Start is called before the first frame update
     void Start()
     {
-        fileName = fileName + (Random.Range(1,10000)).ToString("N4") + ".txt";
-        if (File.Exists(fileName))
-        {
-            Debug.Log(fileName + " already exists.");
-        }
-        tw = File.CreateText(fileName);
+        timeleft = _updateInterval;
     }
 
     // Update is called once per frame
     void Update()
     {
 
-        count++;
-        deltaTime += Time.deltaTime;
-        //count fps every 1 second
-        if (deltaTime > showTime)
-        {
-            float fps = count / deltaTime;
-            float milliSecond = deltaTime * 1000 / count;
-            string strFPS = string.Format("{0:0.0} fps, rendering interval: {1:0.0}ms", fps,milliSecond);
-            GlobalCtrl.M_UIManager.f_txt_debug(strFPS);
-            tw.WriteLine(strFPS);
-            count = 0;
-            deltaTime = 0f;
+        //double fps = 1.0f / Time.deltaTime;
+        //GlobalCtrl.M_UIManager.f_txt_debug(Time.deltaTime.ToString("F2")+"/"+fps.ToString("F2"));
 
+        timeleft -= Time.deltaTime;
+        _accum += Time.timeScale / Time.deltaTime;
+        _frame++;
+        if(timeleft<=0)
+        {
+            float fps = _accum / _frame;
+            GlobalCtrl.M_UIManager.f_txt_debug(Time.deltaTime.ToString("F2") + "/" + fps.ToString("F6"));
+            timeleft = _updateInterval;
+            _accum = 0;
+            _frame = 0; 
         }
     }
 
     private void OnDestroy()
     {
-        tw.Close();
+        //tw.Close();
     }
 
 }

@@ -11,7 +11,6 @@ public class GlobalCtrl : MonoBehaviour
     private static MeshManager meshManager;
     private static FaceVisualizer faceVisualizer;
     private static UIManager uiManager;
-
     public static GlobalCtrl M_Instance
     {
         get
@@ -78,7 +77,7 @@ public class GlobalCtrl : MonoBehaviour
 
         //M_FaceVisualizer.rawArm.f_Init();
     }
-
+    
     // Update is called once per frame.
     /// <summary>
     /// There is no Update functions in any other scripts.
